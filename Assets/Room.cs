@@ -57,6 +57,8 @@ public class Room : MonoBehaviour
                 FloorSize.z);
             MeshRenderer renderer = _floor.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
             renderer.material = FloorMaterial;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = true;
             _floor.transform.parent = transform;
         }
     }
@@ -134,6 +136,8 @@ public class Room : MonoBehaviour
             height);
         MeshRenderer renderer = wall.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
         renderer.material = material;
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        renderer.receiveShadows = true;
         wall.transform.parent = parent;
         return wall;
     }
