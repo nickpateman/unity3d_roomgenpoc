@@ -2,6 +2,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum Wall
+{
+    Back = 0,
+    Left = 1,
+    Right = 2
+}
+
+[System.Serializable]
+public class Adornment
+{
+    public string Key;
+    public Wall Wall;
+    public GameObject Prefab;
+    public Vector3 Offset;
+    public Vector3 Rotation;
+    public Vector3 Scale;
+}
+
 [ExecuteInEditMode]
 public class Room : MonoBehaviour
 { 
@@ -10,6 +28,7 @@ public class Room : MonoBehaviour
     [SerializeField] Material LeftWallMaterial;
     [SerializeField] Material RightWallMaterial;
     [SerializeField] Material FloorMaterial;
+    [SerializeField] Adornment[] Adornments;
 
     private GameObject _floor;
     private GameObject _walls;
@@ -31,6 +50,14 @@ public class Room : MonoBehaviour
 
     public void Reset()
     {
+        DeleteAllChildren();
+        GenerateFloor();
+        GenerateWalls();
+        CreateAdornments();
+    }
+
+    private void DeleteAllChildren()
+    {
         foreach (Transform child in transform)
         {
             Debug.Log($"Destroying '{child.name}'.");
@@ -39,8 +66,6 @@ public class Room : MonoBehaviour
         }
 
         _wallPlanes.Clear();
-        GenerateFloor();
-        GenerateWalls();
     }
 
     private void GenerateFloor()
@@ -193,6 +218,19 @@ public class Room : MonoBehaviour
         Debug.Log($"Resizing and positioning wall '{_wallPlanes[2]}'.");
         _wallPlanes[2].transform.localRotation = Quaternion.Euler(0, 90, 0);
         _wallPlanes[2].transform.localPosition = new Vector3(FloorSize.x, FloorSize.y, 0);
+    }
+
+    private void CreateAdornments()
+    {
+        foreach(var curAdornment in Adornments)
+        {
+            var adornmentPrefab = GameObject.Instantiate(curAdornment.Prefab);
+            var wall = _wallPlanes[(int)curAdornment.Wall];
+            adornmentPrefab.transform.parent = wall.transform;
+            adornmentPrefab.transform.localPosition = curAdornment.Offset;
+            adornmentPrefab.transform.localRotation = Quaternion.Euler(curAdornment.Rotation);
+            adornmentPrefab.transform.localScale = curAdornment.Scale;
+        }
     }
 
 }
