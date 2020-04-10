@@ -1,24 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-
-public enum Wall
-{
-    Back = 0,
-    Left = 1,
-    Right = 2
-}
-
-[System.Serializable]
-public class Adornment
-{
-    public string Key;
-    public Wall Wall;
-    public GameObject Prefab;
-    public Vector3 Offset;
-    public Vector3 Rotation;
-    public Vector3 Scale;
-}
 
 [ExecuteInEditMode]
 public class Room : MonoBehaviour
@@ -31,8 +12,8 @@ public class Room : MonoBehaviour
     [SerializeField] Adornment[] Adornments;
 
     private GameObject _floor;
-    private GameObject _walls;
-    private List<GameObject> _wallPlanes = new List<GameObject>();
+    private GameObject _wallsParent;
+    private Dictionary<Adornment.Wall, GameObject> _walls = new Dictionary<Adornment.Wall, GameObject>();
 
     void Start()
     {
@@ -65,7 +46,7 @@ public class Room : MonoBehaviour
             GameObject.DestroyImmediate(child.gameObject);
         }
 
-        _wallPlanes.Clear();
+        _walls.Clear();
     }
 
     private void GenerateFloor()
@@ -91,11 +72,11 @@ public class Room : MonoBehaviour
     private void GenerateWalls()
     {
         var wallsName = $"{name}.Walls";
-        _walls = GameObject.Find(wallsName);
-        if (_walls == null)
+        _wallsParent = GameObject.Find(wallsName);
+        if (_wallsParent == null)
         {
-            _walls = new GameObject(wallsName);
-            _walls.transform.parent = transform;
+            _wallsParent = new GameObject(wallsName);
+            _wallsParent.transform.parent = transform;
         }
 
         var wall1Name = $"{wallsName}.Back";
@@ -106,12 +87,12 @@ public class Room : MonoBehaviour
                 wall1Name,
                 FloorSize.x,
                 FloorSize.y,
-                _walls.transform,
+                _wallsParent.transform,
                 BackWallMaterial);
-            _wallPlanes.Add(wall1);
+            _walls.Add(Adornment.Wall.Back, wall1);
         }
         else
-            _wallPlanes.Add(wall1);
+            _walls.Add(Adornment.Wall.Back, wall1);
 
         var wall2Name = $"{wallsName}.Left";
         var wall2 = GameObject.Find(wall2Name);
@@ -121,12 +102,12 @@ public class Room : MonoBehaviour
                 wall2Name,
                 FloorSize.z,
                 FloorSize.y,
-                _walls.transform,
+                _wallsParent.transform,
                 LeftWallMaterial);
-            _wallPlanes.Add(wall2);
+            _walls.Add(Adornment.Wall.Left, wall2);
         }
         else
-            _wallPlanes.Add(wall2);
+            _walls.Add(Adornment.Wall.Left, wall2);
 
         var wall3Name = $"{wallsName}.Right";
         var wall3 = GameObject.Find(wall3Name);
@@ -136,12 +117,12 @@ public class Room : MonoBehaviour
                 wall3Name,
                 FloorSize.z,
                 FloorSize.y,
-                _walls.transform,
+                _wallsParent.transform,
                 RightWallMaterial);
-            _wallPlanes.Add(wall3);
+            _walls.Add(Adornment.Wall.Right, wall3);
         }
         else
-            _wallPlanes.Add(wall3);
+            _walls.Add(Adornment.Wall.Right, wall3);
 
         RepositionWalls();
     }
@@ -208,16 +189,16 @@ public class Room : MonoBehaviour
 
     private void RepositionWalls()
     {
-        Debug.Log($"Resizing and positioning wall '{_wallPlanes[0]}'.");
-        _wallPlanes[0].transform.localPosition = new Vector3(0, FloorSize.y, FloorSize.z);
+        Debug.Log($"Resizing and positioning wall '{_walls[Adornment.Wall.Back]}'.");
+        _walls[Adornment.Wall.Back].transform.localPosition = new Vector3(0, FloorSize.y, FloorSize.z);
 
-        Debug.Log($"Resizing and positioning wall '{_wallPlanes[1]}'.");
-        _wallPlanes[1].transform.localRotation = Quaternion.Euler(0, -90, 0);
-        _wallPlanes[1].transform.localPosition = new Vector3(-FloorSize.x, FloorSize.y, 0);
+        Debug.Log($"Resizing and positioning wall '{_walls[Adornment.Wall.Left]}'.");
+        _walls[Adornment.Wall.Left].transform.localRotation = Quaternion.Euler(0, -90, 0);
+        _walls[Adornment.Wall.Left].transform.localPosition = new Vector3(-FloorSize.x, FloorSize.y, 0);
 
-        Debug.Log($"Resizing and positioning wall '{_wallPlanes[2]}'.");
-        _wallPlanes[2].transform.localRotation = Quaternion.Euler(0, 90, 0);
-        _wallPlanes[2].transform.localPosition = new Vector3(FloorSize.x, FloorSize.y, 0);
+        Debug.Log($"Resizing and positioning wall '{_walls[Adornment.Wall.Right]}'.");
+        _walls[Adornment.Wall.Right].transform.localRotation = Quaternion.Euler(0, 90, 0);
+        _walls[Adornment.Wall.Right].transform.localPosition = new Vector3(FloorSize.x, FloorSize.y, 0);
     }
 
     private void CreateAdornments()
@@ -225,7 +206,7 @@ public class Room : MonoBehaviour
         foreach(var curAdornment in Adornments)
         {
             var adornmentPrefab = GameObject.Instantiate(curAdornment.Prefab);
-            var wall = _wallPlanes[(int)curAdornment.Wall];
+            var wall = _walls[curAdornment.ParentWall];
             adornmentPrefab.transform.parent = wall.transform;
             adornmentPrefab.transform.localPosition = curAdornment.Offset;
             adornmentPrefab.transform.localRotation = Quaternion.Euler(curAdornment.Rotation);
